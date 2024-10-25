@@ -1,6 +1,7 @@
 <?php 
     header("Access-Control-Allow-Origin: *");   
     $DEALER_NAME="PHP.DEALER"; //DEALER_NAME
+    $URI_REZ="http://5ELG_RECIVER_URI"
 
     function getUserIP() {
         $ip = null;
