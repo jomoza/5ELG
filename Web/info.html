@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>5ELG - Information</title>
+    <link rel="stylesheet" href="assets/css/index.css">
+    <link rel="shortcut icon" href="assets/img/favicon.ico" type="image/x-icon">
+    <script src="https://unpkg.com/sweetalert/dist/sweetalert.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="assets/js/info.js"></script>
+
+    <!-- Leaflet CSS and JS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+    
+    <style>
+        #map {
+            height: 400px; 
+            width: 100%;
+            display: none; 
+        }
+        .message {
+            color: #88c0d0;
+            font-weight: bold;
+            text-align: center;
+        }
+        .spoiler-content {
+            display: none;
+        }
+
+    </style>
+</head>
+<body>
+    <nav>
+        <div class="nav-container">
+            <div class="brand">
+                <a href="/">5ELG</a>
+                <a href="https://github.com/jomoza/5ELG" target="_blank">GITHUB</a>
+            </div>
+            <ul class="nav-links">
+                <li><a href="/dashboard-logs">DASHBOARD</a></li>
+                <li><a href="/data-dealers">DEALERS</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <h1>{{.result.Fr}}</h1>
+
+    <div class="">
+        <table id="infoTable">
+            <thead>
+                <tr>
+                    <th scope="col">#</th>
+                    <th scope="col">=＾● ⋏ ●＾=</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <th scope="row">General Info</th>
+                    <td>
+                        <p class="data1"><b>🔷 Request ID:</b> {{.result.ID}} </p>
+                        <p class="data1"><b>🔷 IP Address:</b> {{.result.Ip}} </p>
+                        <p class="data1"><b>🔷 User-Agent:</b> {{.result.Ua}} </p>
+                        <p class="data1"><b>🔷 Request Timestamp:</b> {{.result.Ts}} </p>
+                        <p class="data1"><b>🔷 DEALER:</b> {{.result.Dl}} </p>
+                        <p class="data1"><b>🔷 User Fingerprint:</b> {{.result.Fu}} </p>
+                        <p class="data1"><b>🔷 Browser Fingerprint:</b> {{.result.Fb}} </p>
+                    </td>
+                </tr>            
+                <tr>
+                    <th scope="col">OSINT</th>
+                    <td scope="col">
+                        <div class="btn1">
+                            <button type="button" onclick="getIpInfo('{{.result.Ip}}')">IP Info</button>
+                            <button type="button" onclick="getWhoisInfo('{{.result.Ip}}')">Whois</button>
+                            <button type="button" onclick="getUserAgent('{{.result.Ua}}')">User Agent</button> | 
+                            <button type="button"><a href="https://www.shodan.io/host/{{.result.Ip}}">Shodan</a></button>
+                            <button type="button"><a href="https://www.criminalip.io/asset/report/{{.result.Ip}}">CriminalIP</a></button>
+                            <button type="button"><a href="https://intelx.io/?s={{.result.Ip}}">IntelX</a></button>
+                        </div>
+                    </td>
+                </tr>
+                <tr>
+                    <th scope="">Client-Side Data tracked (Merca)</th>
+                    <td>
+                        <pre id="clientSideData" class="scrollable-content"></pre>
+                    </td>
+                </tr>
+                <tr>
+                    <th scope="">Server-Side Data tracked (Dealer)</th>
+                    <td>
+                        <pre id="serverSideData" class="scrollable-content"></pre>
+                    </td>
+                </tr>
+                {{if .html}}
+                <tr>
+                    <th scope="">HTML Code</th>
+                    <td>
+                        <button class="spoiler-btn" onclick="toggleSpoiler()">Show HTML Code</button>
+                        <div class="spoiler-content" id="htmlSpoiler">
+                            <pre id="htmlCode"></pre>
+                        </div>
+                    </td>
+                </tr>
+                {{end}}
+                {{if .img}}
+                <tr>
+                    <th scope="row">CANVAS IMG CAPTURE</th>
+                    <td>
+                        <button class="spoiler-btn" onclick="toggleImageSpoiler()">Show Image</button>
+                        <div class="spoiler-content" id="imageSpoiler">
+                            <figure>
+                                <img src="data:image/png;base64,{{.img}}" alt="Canvas Image Capture">
+                                <figcaption>A caption for the above image.</figcaption>
+                            </figure>
+                        </div>
+                    </td>
+                </tr>
+                {{end}}
+
+                {{if .pdf_code}}
+                <tr>
+                    <th scope="row">PDF CAPTURE</th>
+                    <td>
+                        <figure>
+                            <img src="data:image/png;base64,{{.pdf_code}}">
+                            <figcaption>PDF CAPTURE.</figcaption>
+                        </figure>
+                    </td>
+                </tr>
+                {{end}}
+            </tbody>
+        </table>
+
+        <div id="map"></div>
+        <div id="privateIpMessage" class="message"></div> 
+    </div>
+
+    <script>
+        const clientSideBase64 = "{{.cs_data}}"; 
+        const serverSideBase64 = "{{.ss_data}}"; 
+        const htmlBase64 = "{{.html}}"; 
+        const ipAddress = "{{.result.Ip}}"; 
+
+        console.log("{{.img}}");
+
+        function injectBase64Content() {
+            const decodedClientSideData = atob(clientSideBase64);
+            const decodedServerSideData = atob(serverSideBase64);
+            
+            const clientSideDiv = document.getElementById("clientSideData");
+            const serverSideDiv = document.getElementById("serverSideData");
+            
+            const clientPre = document.createElement("pre");
+            clientPre.textContent = decodedClientSideData;
+            clientSideDiv.appendChild(clientPre);
+            
+            const serverPre = document.createElement("pre");
+            serverPre.textContent = decodedServerSideData;
+            serverSideDiv.appendChild(serverPre);
+        }
+
+        function isPrivateIP(ip) {
+            const segments = ip.split('.').map(Number);
+            return (
+                (segments[0] === 10) || 
+                (segments[0] === 172 && segments[1] >= 16 && segments[1] <= 31) || 
+                (segments[0] === 192 && segments[1] === 168) || 
+                (ip.startsWith("127.")) 
+            );
+        }
+
+        function toggleImageSpoiler() {
+            const imageSpoiler = document.getElementById("imageSpoiler");
+            const imageBtn = document.querySelector('button[onclick="toggleImageSpoiler()"]');
+            if (imageSpoiler.style.display === "none") {
+                imageSpoiler.style.display = "block";
+                imageBtn.textContent = "Hide Image";
+            } else {
+                imageSpoiler.style.display = "none";
+                imageBtn.textContent = "Show Image";
+            }
+        }
+
+
+        function toggleSpoiler() {
+            const spoilerContent = document.getElementById("htmlSpoiler");
+            const spoilerBtn = document.querySelector('.spoiler-btn');
+            if (spoilerContent.style.display === "none") {
+                spoilerContent.style.display = "block";
+                spoilerBtn.textContent = "Hide HTML Code";
+            } else {
+                spoilerContent.style.display = "none";
+                spoilerBtn.textContent = "Show HTML Code";
+            }
+
+            const htmlCodePre = document.getElementById("htmlCode");     
+            htmlCodePre.textContent = decodeURIComponent(atob(decodeURIComponent(htmlBase64))); 
+        }
+
+        function initMap() {
+    if (isPrivateIP(ipAddress)) {
+        const messageDiv = document.getElementById('privateIpMessage');
+        messageDiv.textContent = "The IP address is private and cannot be displayed on the map.";
+        document.getElementById('map').style.display = "none"; 
+        return;
+    }
+
+    fetch(`https://api.ipapi.is/?ip=${ipAddress}`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.location) {
+                const latitude = data.location.latitude;
+                const longitude = data.location.longitude;
+
+                const map = L.map('map').setView([latitude, longitude], 10);
+
+                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                    maxZoom: 19,
+                    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+                }).addTo(map);
+
+                L.marker([latitude, longitude]).addTo(map)
+                    .bindPopup(`<b>IP:</b> ${ipAddress}<br><b>Location:</b> ${data.location.city}, ${data.location.region}, ${data.location.country}`)
+                    .openPopup();
+            } else {
+                console.error('Error obtaining location:', data.message);
+            }
+        })
+        .catch(error => {
+            console.error('Error in the request:', error);
+        });
+}
+        injectBase64Content();
+        initMap(); 
+    </script>
+</body>
+</html>

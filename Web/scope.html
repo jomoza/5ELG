@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>5ELG - Database</title>
+    <link rel="shortcut icon" href="assets/img/favicon.ico" type="image/x-icon">
+    <link rel="stylesheet" href="assets/css/index.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="assets/js/sweetalert.js"></script>
+</head>
+<body>
+    <!-- Navigation Bar -->
+    <nav>        
+        <div class="nav-container">
+            <div class="brand">
+                <a href="/">5ELG</a>
+                <a href="https://github.com/jomoza/5ELG" target="_blank">GITHUB</a>
+            </div>
+            <ul class="nav-links">
+                <li><a href="/dashboard-logs">DASHBOARD</a></li>
+                <li><a href="/data-dealers">DEALERS</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <hr>
+
+    <h4>Upload CSV Data</h4>
+    <center>
+    <p>If you have collected data offline, you can upload it in CSV format here. This data will be added to the database and processed alongside live data.</p>
+    <form action="/scope" method="post" enctype="multipart/form-data">
+        <input type="file" name="file">
+        <input type="submit" value="Upload">
+    </form>
+    </center>
+    <hr>
+
+</body>
+</html>

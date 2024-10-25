@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>5ELG - Live Traffic</title>
+    <link rel="shortcut icon" href="assets/img/favicon.ico" type="image/x-icon">
+    <link rel="stylesheet" href="assets/css/index.css">
+    <script>
+        // Function to fetch and update the logs 
+        function fetchLast7Logs() {
+            let reqst = {}; 
+            fetch('/api/last7logs')
+                .then(response => response.json())
+                .then(data => {
+                    const tableBody = document.querySelector("#logsTable tbody");
+                    tableBody.innerHTML = ''; // Limpiar la tabla antes de añadir los nuevos datos
+
+                    data.forEach(log => {
+                        const row = document.createElement('tr');
+                        console.log();
+
+                        try {
+                            reqst = JSON.parse(atob(log.request_data));
+                            
+                        } catch (error) {
+                            console.error('Error parsing request_data:', error); 
+                            // Aquí puedes realizar otras acciones en caso de error, como dejar reqst vacío
+                        }
+
+                        row.innerHTML = `
+                            <td>${log.id || '#'}</td>
+                            <td>${log.ip || '#'}</td>
+                            <td>${reqst.method || '#'}</td>
+                            <td>${reqst.requestURL || '#'}</td>
+                            <td>${log.user_agent || '#'}</td>
+                            <td>${reqst.dealer_uri || 'DATA'}</td>
+                            <td>${reqst.merca_uri || 'DATA'}</td>
+                        `;
+                       
+                        tableBody.appendChild(row);
+                    });
+                })
+                .catch(error => console.error('Error fetching logs:', error));
+        }
+
+        // Set polling interval to refresh the logs and dealer counts every 5 seconds
+        setInterval(fetchLast7Logs, 1000);
+        
+        // Fetch logs and dealer counts on initial load
+        document.addEventListener("DOMContentLoaded", function() {
+            fetchLast7Logs();
+        });
+    </script>
+</head>
+<body>
+    <nav>
+        <div class="nav-container">
+            <div class="brand">
+                <a href="/">5ELG</a>
+                <a href="https://github.com/jomoza/5ELG" target="_blank">GITHUB</a>
+            </div>
+            <ul class="nav-links">
+                <li><a href="/dashboard-logs" class="active">DASHBOARD</a></li>
+                
+                <li><a href="/data-dealers">DEALERS</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <h1>LIVE TRAFFIC CALLBACK SERVER</h1>
+    
+    <!-- Dynamic Logs Table -->
+    <table id="logsTable">
+        <thead>
+            <tr>
+                <th scope="col">//</th>
+                <th scope="col">IP Address</th>
+                <th scope="col">Method</th>
+                <th scope="col">Path</th>
+                <th scope="col">User-Agent</th>
+                <th scope="col">Dealer URI</th>
+                <th scope="col">Merca URI</th>
+            </tr>
+        </thead>
+        <tbody>
+            <!-- This will be dynamically populated with the latest logs -->
+        </tbody>
+    </table>
+</body>
+</html>

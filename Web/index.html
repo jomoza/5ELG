@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>5ELG - Dashboard</title>
+    
+    <script>
+        // Función para hacer que la imagen sea arrastrable
+        function makeImageDraggable() {
+            const img = document.getElementById("draggableImage");
+            let isDragging = false;
+            let offsetX = 0;
+            let offsetY = 0;
+    
+            img.addEventListener("mousedown", (e) => {
+                isDragging = true;
+                offsetX = e.clientX - img.offsetLeft;
+                offsetY = e.clientY - img.offsetTop;
+                img.style.cursor = 'grabbing';
+            });
+    
+            document.addEventListener("mousemove", (e) => {
+                if (isDragging) {
+                    img.style.left = `${e.clientX - offsetX}px`;
+                    img.style.top = `${e.clientY - offsetY}px`;
+                }
+            });
+    
+            document.addEventListener("mouseup", () => {
+                isDragging = false;
+                img.style.cursor = 'move';
+            });
+        }
+    
+        // Ejecuta la función para activar la funcionalidad de arrastre
+        document.addEventListener("DOMContentLoaded", makeImageDraggable);
+    </script>
+    
+    <link rel="stylesheet" href="assets/css/index.css">
+    <link rel="shortcut icon" href="assets/img/favicon.ico" type="image/x-icon">
+
+    <!-- jQuery -->
+    <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
+    <!-- DataTables JS -->
+    <script src="https://cdn.datatables.net/1.10.24/js/jquery.dataTables.min.js"></script>
+</head>
+<body>
+    <nav>
+        <div class="nav-container">
+            <div class="brand">
+                <a href="/">5ELG</a>
+                <a href="https://github.com/jomoza/5ELG" target="_blank">GITHUB</a>
+            </div>
+            <ul class="nav-links"><li><a href="/dashboard-logs">DASHBOARD</a></li>
+                <li><a href="/data-dealers">DEALERS</a></li>
+                
+            </ul>
+        </div>
+    </nav>
+    <div class="image-container">
+    <img id="draggableImage" src="assets/img/eye1_no.png" alt="Draggable Image">
+    </div>
+</body>
+</html>
+
