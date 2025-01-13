@@ -295,4 +295,4 @@ Web Application Firewalls (WAFs) are increasingly used to block unwanted traffic
    
 ---
 
-![](https://hackmd-prod-images.s3-ap-northeast-1.amazonaws.com/uploads/upload_1abd02d4a7a30fa6c67b3c6ca4e9cce5.png?AWSAccessKeyId=AKIA3XSAAW6AWSKNINWO&Expires=1728251573&Signature=4bcto6CfbpWODTpnz8W4t%2B8NFmg%3D)
+![](https://imgflip.com/i/9ggze6)
