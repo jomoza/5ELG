@@ -13,12 +13,15 @@
     <nav>        
         <div class="nav-container">
             <div class="brand">
-                <a href="/">5ELG</a>
+                <a href="/web/index">5ELG</a>
                 <a href="https://github.com/jomoza/5ELG" target="_blank">GITHUB</a>
             </div>
             <ul class="nav-links">
-                <li><a href="/dashboard-logs">DASHBOARD</a></li>
-                <li><a href="/data-dealers">DEALERS</a></li>
+                <li><a href="/web/callback">CALLBACK</a>|</li>
+                <li><a href="/web/dashboard">BROWSERS_DASHBOARD</a>
+                <a href="/web/scanners" >IPs_DASHBOARD</a>|</li>
+                <li><a href="/web/files">FILES</a>|</li>
+                <li><a href="/web/options">OPTIONS</a></li>
             </ul>
         </div>
     </nav>
@@ -28,7 +31,7 @@
     <h4>Upload CSV Data</h4>
     <center>
     <p>If you have collected data offline, you can upload it in CSV format here. This data will be added to the database and processed alongside live data.</p>
-    <form action="/scope" method="post" enctype="multipart/form-data">
+    <form action="/api/out/upload" method="post" enctype="multipart/form-data">
         <input type="file" name="file">
         <input type="submit" value="Upload">
     </form>

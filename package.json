@@ -1,0 +1,45 @@
+{
+  "name": "5elg-dev",
+  "version": "1.0.0",
+  "description": "fingerprinting devices dashboard",
+  "main": "main.js",
+  "scripts": {
+    "test": "node main.js -help",
+    "start": "node main.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/jomoza/5ELG-DEV.git"
+  },
+  "author": "j0moz4",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/jomoza/5ELG-DEV/issues"
+  },
+  "homepage": "https://github.com/jomoza/5ELG-DEV#readme",
+  "dependencies": {
+    "axios": "^1.7.9",
+    "basic-auth": "^2.0.1",
+    "cors": "^2.8.5",
+    "csv-parser": "^3.1.0",
+    "dotenv": "^16.4.7",
+    "express": "^4.21.1",
+    "geoip-lite": "^1.4.10",
+    "handlebars": "^4.7.8",
+    "json2csv": "^6.0.0-alpha.2",
+    "jsonwebtoken": "^9.0.2",
+    "libnmap": "^0.4.19",
+    "multer": "^1.4.5-lts.1",
+    "native-dns": "^0.7.0",
+    "node-nmap": "^4.0.0",
+    "nodejs-geolocation": "^1.4.3",
+    "pcap": "^3.1.0",
+    "raw-socket": "^1.8.1",
+    "sequelize": "^6.37.5",
+    "shodan-client": "^3.1.5",
+    "sqlite3": "^5.1.7",
+    "whois-json": "^2.0.4",
+    "ws": "^8.18.0",
+    "xml2js": "^0.6.2"
+  }
+}

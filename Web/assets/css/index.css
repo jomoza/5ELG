@@ -79,6 +79,11 @@ nav {
     text-decoration: none;
 }
 
+.line:hover {
+    text-decoration: underline;
+    cursor: pointer; /* Asegura que el cursor cambie a una mano */
+}
+
 .nav-container {
     display: flex;
     justify-content: space-between;
@@ -255,11 +260,16 @@ h1, h4 {
 }
 
 #logsTable th, #logsTable td {
-    padding: 12px;
+    padding: 4px;
     border: 1px solid #88C0D0; 
     color: #D8DEE9; 
-    background-color: transparent; 
+    background-color: transparent;
+    text-align: center; /* Centra el contenido */
+    white-space: nowrap; /* Evita que el texto haga saltos de línea */
+    overflow: hidden; /* Oculta el contenido desbordado */
+    text-overflow: ellipsis; /* Muestra "..." para contenido largo */
 }
+
 
 #logsTable tr:nth-child(even) {
     background-color: #434C5E;

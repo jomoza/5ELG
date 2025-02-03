@@ -1,0 +1,496 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>IP Viewer</title>
+    <link rel="shortcut icon" href="assets/img/favicon.ico" type="image/x-icon">
+    <link rel="stylesheet" href="assets/css/index.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.1/js/jquery.dataTables.min.js"></script>
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.1/css/jquery.dataTables.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+    <style>
+        
+        .info-box {
+            margin: 20px 0;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        .button-group {
+            margin: 20px 0;
+            display: flex;
+            gap: 10px;
+        }
+        .button-group button {
+            padding: 10px 15px;
+            cursor: pointer;
+            border: none;
+            background-color: #81a1c1;
+            color: black;
+            border-radius: 5px;
+            font-size: 1em;
+        }
+        .button-group button:hover {
+            background-color: #6391b0;
+        }
+        .section-buttons {
+            display: flex;
+            gap: 10px;
+            margin: 20px 0;
+            flex-wrap: wrap; /* Allows buttons to wrap in case of overflow */
+        }
+        .section-title {
+            margin: 10px 0;
+            font-weight: bold;
+            font-size: 1.2em;
+        }
+        .section-content {
+            display: none;
+            margin: 10px 0;
+        }
+        table {
+            width: 100%;
+            margin-top: 20px;
+            border-collapse: collapse;
+        }
+        table, th, td {
+            border: 1px solid #ddd;
+        }
+        th, td {
+            padding: 10px;
+            text-align: left;
+        }
+        pre {
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+        .toggle-button {
+            padding: 10px 15px;
+            cursor: pointer;
+            background-color: #81a1c1;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            margin-right: 10px;
+        }
+        .toggle-button:hover {
+            background-color: #6391b0;
+        }
+        /* General Styles for Small Buttons */
+
+        #small-button {
+            font-size: 0.95rem; /* Smaller font size */
+            padding: 5px 10px; /* Less padding for a compact look */
+            background-color: transparent; /* A simple purple background */
+            color: #ffffff; /* White text color */
+            border: none; /* No borders for a minimal look */
+            border-radius: 4px; /* Slightly rounded corners */
+            cursor: pointer; /* Pointer cursor for better UX */
+            transition: all 0.2s ease-in-out; /* Smooth hover effects */
+        }
+
+        /* Hover Effect */
+        #small-button:hover {
+            background-color: transparent; /* Slightly darker purple on hover */
+            transform: scale(1.05); /* Slight zoom effect on hover */
+            box-shadow: 0px 2px 5px rgba(0, 0, 0, 0.2); /* Subtle shadow on hover */
+        }
+
+        /* Active State */
+        #small-button:active {
+            background-color: transparent; /* Even darker purple when clicked */
+            transform: scale(1); /* Remove the hover zoom effect */
+        }
+
+        /* Disabled State */
+        #small-button:disabled {
+            background-color: #cccccc; /* Light grey for disabled state */
+            color: #666666; /* Grey text color */
+            cursor: not-allowed; /* Show not-allowed cursor */
+            opacity: 0.7; /* Reduce opacity for a disabled effect */
+        }
+
+    </style>
+</head>
+<body>
+    <nav>
+        <div class="nav-container">
+            <div class="brand">
+                <a href="/web/index">5ELG</a>
+                <a href="https://github.com/jomoza/5ELG" target="_blank">GITHUB</a>
+            </div>
+            <ul class="nav-links">
+                <li><a href="/web/callback">CALLBACK</a>|</li>
+                <li><a href="/web/dashboard">BROWSERS_DASHBOARD</a>
+                <a href="/web/scanners" >IPs_DASHBOARD</a>|</li>
+                <li><a href="/web/files">FILES</a>|</li>
+                <li><a href="/web/options">OPTIONS</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <h1>OSINT Data Viewer {{idreq}}</h1>
+    <h2 id="ip-title" style="text-align: center; color: white;"></h2>
+
+    <div id="info-container" class="info-box">
+        <p><b>ID:</b> <span id="">{{idreq}}</span></p>
+        <p><b>Mac:</b> <span id="data-mac">...</span></p>
+        <p><b>Links:</b> <span id="data-links">...</span></p>
+        <div class="button-group">
+            <button onclick="showRequests()">REQUEST</button>
+        </div>
+        <hr>
+        <h2>Geolocation Information</h2>
+        <p><b>Country:</b> <span id="geo-country">Loading...</span></p>
+        <p><b>City:</b> <span id="geo-city">Loading...</span></p>
+        <p><b>Latitude:</b> <span id="geo-latitude">Loading...</span></p>
+        <p><b>Longitude:</b> <span id="geo-longitude">Loading...</span></p>
+        <div class="button-group">
+            <button onclick="showMap()">SHOW IN MAP</button>
+        </div>
+    </div>
+
+<!--    <div class="button-group">
+        <button onclick="">RUN NMAP</button>
+        <button onclick="">RUN GEOIP</button>
+        <button onclick="">RUN OSINT</button>
+        <button onclick="">DELETE DATA</button>
+-->
+    </div>
+
+    <hr>
+    <h2>RESULTS</h2>
+    <div id="sections-container">
+        <div class="section-buttons"></div>
+        <div id="section-contents"></div>
+    </div>
+
+    <script>
+        //{{idreq}}
+
+        
+        const apiUrl = `/api/ips/info?ID={{idreq}}`;
+        let osintData = null;
+
+        // Function to escape HTML characters to prevent HTML rendering
+        function escapeHtml(unsafe) {
+            return String(unsafe) // Ensure it's a string
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")
+                .replace(/"/g, "&quot;")
+                .replace(/'/g, "&#039;");
+        }
+
+        // Fetch data from the API
+        async function fetchData() {
+            try {
+                const response = await fetch(apiUrl);
+                if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+                osintData = await response.json();
+                console.log("OSINT Data:", osintData);
+
+                // Update title with the IP
+                document.getElementById('ip-title').textContent = `${osintData.IP}`;
+
+                const encodedIP = btoa(`${osintData.IP}`);
+                // Update geolocation information
+                const geo = JSON.parse(osintData.GEO) || {};
+                const [latitude, longitude] = geo.loc ? geo.loc.split(',') : [0, 0];
+                document.getElementById('data-mac').textContent = escapeHtml(osintData.MAC || 'N/A');
+                document.getElementById('data-links').innerHTML = `<a href='https://intelx.io/?s=${osintData.IP}'>INTELX</a> | <a href='https://search.censys.io/hosts/${osintData.IP}'>CENSYS</a> | <a href='https://en.fofa.info/result?qbase64=${encodedIP}'>FOFA</a> | <a href='https://ipinfo.io/${osintData.IP}'>IPINFO</a>`;
+
+                document.getElementById('geo-country').textContent = escapeHtml(geo.country || 'N/A');
+                document.getElementById('geo-city').textContent = escapeHtml(geo.city || 'N/A');
+                document.getElementById('geo-latitude').textContent = escapeHtml(latitude);
+                document.getElementById('geo-longitude').textContent = escapeHtml(longitude);
+
+                // Populate the sections
+                populateSections(JSON.parse(JSON.parse(osintData.DATA)));
+            } catch (error) {
+                console.error("Error fetching OSINT data:", error);
+            }
+        }
+
+        async function showRequests() {
+            try {
+                if (!osintData || !osintData.IP) {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Error',
+                        text: 'No IP data available.',
+                    });
+                    return;
+                }
+
+                const ip = osintData.IP;
+                const apiUrl = `/api/getfinger/getIPlogs/${ip}`;
+
+                Swal.fire({
+                    title: 'Loading Requests...',
+                    text: 'Fetching data, please wait...',
+                    allowOutsideClick: false,
+                    didOpen: () => {
+                        Swal.showLoading();
+                    }
+                });
+
+                const response = await fetch(apiUrl);
+                if (!response.ok) {
+                    throw new Error(`HTTP error! Status: ${response.status}`);
+                }
+
+                const requestData = await response.json();
+                if (!requestData || requestData.length === 0) {
+                    Swal.fire({
+                        icon: 'info',
+                        title: 'No Requests Found',
+                        text: 'No data available for this IP.',
+                    });
+                    return;
+                }
+
+                const tableRows = requestData.map((entry, index) => `
+                    <tr>
+                        <td style="border: 1px solid #ddd; padding: 8px;">${index + 1}</td>
+                        <td style="border: 1px solid #ddd; padding: 8px;">${entry.Ua || 'N/A'}</td>
+                        <td style="border: 1px solid #ddd; padding: 8px;">${entry.Fu || 'N/A'}</td>
+                        <td style="border: 1px solid #ddd; padding: 8px;"><a href="/web/info?id=${entry.Fr}" target="_blank">REQUEST</a></td>
+                    </tr>
+                `).join('');
+
+                const tableHtml = `
+                    <table style="width:100%; border-collapse: collapse;">
+                        <thead>
+                            <tr>
+                                <th style="border: 1px solid #ddd; padding: 8px;">#</th>
+                                <th style="border: 1px solid #ddd; padding: 8px;">Timestamp</th>
+                                <th style="border: 1px solid #ddd; padding: 8px;">User-Agent</th>
+                                <th style="border: 1px solid #ddd; padding: 8px;">Fingerprint</th>
+                            </tr>
+                        </thead>
+                        <tbody>${tableRows}</tbody>
+                    </table>
+                `;
+
+                Swal.fire({
+                    title: 'Request Logs',
+                    html: tableHtml,
+                    width: '80%',
+                    confirmButtonText: 'Close',
+                });
+
+            } catch (error) {
+                console.error('Error fetching request logs:', error);
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error',
+                    text: 'An error occurred while fetching the request logs.',
+                });
+            }
+        }
+
+
+        // Show the map in a SweetAlert
+        function showMap() {
+            try {
+                const geo = JSON.parse(osintData.GEO) || {}; // Aseguramos que sea un objeto válido
+                const loc = geo.loc ? geo.loc.split(',') : null; // Extraemos loc si existe
+                const latitude = loc && loc.length > 0 ? parseFloat(loc[0]) : null; // Validamos latitud
+                const longitude = loc && loc.length > 1 ? parseFloat(loc[1]) : null; // Validamos longitud
+
+                if (!latitude || !longitude) {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Error',
+                        text: 'No valid coordinates available to display the map.',
+                    });
+                    return;
+                }
+
+                Swal.fire({
+                    title: 'Geolocation Map',
+                    html: '<div id="map" style="height: 400px;"></div>',
+                    width: '600px',
+                    didOpen: () => {
+                        const map = L.map('map').setView([latitude, longitude], 13);
+                        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                            attribution: '&copy; OpenStreetMap contributors'
+                        }).addTo(map);
+                        L.marker([latitude, longitude]).addTo(map)
+                            .bindPopup(`<b>${geo.city || 'Unknown City'}, ${geo.country || 'Unknown Country'}</b>`)
+                            .openPopup();
+                    }
+                });
+            } catch (error) {
+                console.error('Error displaying map:', error);
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error',
+                    text: 'There was an issue displaying the map. Please check the data or try again.',
+                });
+            }
+        }
+
+
+        // Populate sections with JSON data
+        function populateSections(data) {
+            const sectionButtons = document.querySelector('.section-buttons');
+            const sectionContents = document.getElementById('section-contents');
+            sectionButtons.innerHTML = '';
+            sectionContents.innerHTML = '';
+
+            // Define sections
+            const sections = {
+                nmap: data.nmap || null,
+                whois: data.whois || null,
+                shodan: data.shodan || null,
+                criminalip: data.criminalip || null,
+                virustotal: data.virustotal || null,
+            };
+
+            Object.keys(sections).forEach(sectionKey => {
+                const sectionData = sections[sectionKey];
+                if (sectionData) {
+                    const button = document.createElement('button');
+                    button.textContent = sectionKey.toUpperCase();
+                    button.className = 'toggle-button';
+                    button.onclick = () => toggleSection(sectionKey, sectionData);
+                    sectionButtons.appendChild(button);
+                }
+            });
+        }
+
+        function toggleSection(sectionKey, sectionData) {
+    const sectionContents = document.getElementById('section-contents');
+    
+    // Verifica si la sección ya está visible
+    if (sectionContents.dataset.activeSection === sectionKey) {
+        // Si la sección ya está visible, la ocultamos
+        sectionContents.innerHTML = '';
+        sectionContents.dataset.activeSection = ''; // Reinicia el indicador de sección activa
+    } else {
+        // Si no está visible, mostramos la tabla
+        sectionContents.innerHTML = `
+            <h2>${sectionKey.toUpperCase()}</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Field</th>
+                        <th>Value</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${Object.keys(sectionData)
+                        .map(key => `
+                            <tr>
+                                <td>${escapeHtml(key)}</td>
+                                <td><pre>${escapeHtml(JSON.stringify(sectionData[key], null, 2))}</pre></td>
+                            </tr>
+                        `)
+                        .join('')}
+                </tbody>
+            </table>
+        `;
+        sectionContents.dataset.activeSection = sectionKey; // Marca la sección activa
+    }
+}
+
+async function showBrowsers() {
+    try {
+        // Get the IP address from the "ip-title" element
+        const ipElement = document.getElementById('ip-title');
+        const ip = ipElement ? ipElement.textContent.trim() : null;
+
+        if (!ip) {
+            Swal.fire({
+                icon: 'error',
+                title: 'Error',
+                text: 'No IP address found on the page.',
+            });
+            return;
+        }
+
+        // Fetch the browser data from the API
+        const apiUrl = `http://192.168.1.74/api/fip?ip=${ip}`;
+        const response = await fetch(apiUrl);
+
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const browserData = await response.json();
+
+        // Check if there is data available
+        if (!browserData || browserData.length === 0) {
+            Swal.fire({
+                icon: 'info',
+                title: 'No Data',
+                text: 'No browser data found for the given IP address.',
+            });
+            return;
+        }
+
+        // Parse and extract browser data from the API result
+        const parsedData = browserData.map((entry) => {
+            return {
+                Ts: entry.Ts || 'N/A', // Timestamp
+                Fu: entry.Fu || 'N/A', // Unique fingerprint
+                Fb: entry.Fb || 'N/A', // Browser fingerprint
+            };
+        });
+
+        // Build the HTML table dynamically
+        const tableRows = parsedData.map((data) => {
+            return `
+                <tr>
+                    <td style="border: 1px solid #ddd; padding: 8px;">${escapeHtml(data.Ts)}</td>
+                    <td style="border: 1px solid #ddd; padding: 8px;"><a class="dashline line" href="/web/dashboard#${escapeHtml(data.Fu)}" target="_blank">${escapeHtml(data.Fu)}</a></td>
+                    <td style="border: 1px solid #ddd; padding: 8px;"><a class="dashline line" href="/web/dashboard#${escapeHtml(data.Fb)}" target="_blank">${escapeHtml(data.Fb)}</a></td>
+                    <td style="border: 1px solid #ddd;"><button id='small-button' onclick="location.href='/web/info?id=${escapeHtml(data.Fb)}'" class='line'>🔍</button></td>
+                </tr>
+            `;
+        }).join('');
+
+        const tableHtml = `
+            <table style="width:100%; border-collapse: collapse;">
+                <thead>
+                    <tr>
+                        <th style="border: 1px solid #ddd; padding: 8px;">Timestamp</th>
+                        <th style="border: 1px solid #ddd; padding: 8px;">User Fingerprint</th>
+                        <th style="border: 1px solid #ddd; padding: 8px;">Browser Fingerprint</th>
+                        <th style="border: 1px solid #ddd;">@</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${tableRows}
+                </tbody>
+            </table>
+        `;
+
+        // Display the table in a SweetAlert modal
+        Swal.fire({
+            title: 'Browsers Data',
+            html: tableHtml,
+            width: '80%',
+            confirmButtonText: 'Close',
+            confirmButtonColor: 'red',
+        });
+    } catch (error) {
+        console.error('Error fetching or displaying browser data:', error);
+        Swal.fire({
+            icon: 'error',
+            title: 'Error',
+            text: 'An error occurred while fetching or displaying the browser data.',
+        });
+    }
+}
+
+
+        // Fetch data on page load
+        document.addEventListener("DOMContentLoaded", fetchData);
+    </script>
+</body>
+</html>

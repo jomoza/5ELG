@@ -25,7 +25,7 @@ function initStatusListeners() {
 
 function clearLogById(id) {
     // URL del endpoint con el ID
-    const apiUrl = `/api/clear_logs?id=${id}`;
+    const apiUrl = `/api/purge?id=${id}`;
 
     // Realizar la petición GET al endpoint
     fetch(apiUrl, { method: 'GET' })
@@ -71,7 +71,7 @@ function clearLogs() {
     }).then((result) => {
         if (result.isConfirmed) {
             // Si el usuario confirma, hacer la petición
-            fetch('/api/clear_logs', {
+            fetch('/api/purge', {
                 method: 'POST', // Ajusta el método según tu API
             })
             .then(response => {
@@ -115,7 +115,7 @@ function clearLogs() {
 
 function generateCSVLogs() {
     // Realizar una solicitud GET al endpoint para generar el CSV
-    fetch('/api/generate_csv_logs', {
+    fetch('/api/out/backup', {
         method: 'GET',
         headers: {
             'Content-Type': 'application/json'
@@ -151,7 +151,7 @@ function generateCSVLogs() {
 
 
 function downloadCSV() {
-    const url = '/api/csv_all_clients'; // Asegúrate de que el endpoint coincida con tu ruta de API
+    const url = '/api/out/all'; // Asegúrate de que el endpoint coincida con tu ruta de API
 
     fetch(url, {
         method: 'GET',
@@ -185,7 +185,7 @@ function downLogID(id) {
     }
 
     // Construir la URL del endpoint con el ID proporcionado
-    const endpointUrl = `/api/csv_client_info?id=${id}`;
+    const endpointUrl = `/api/out/info?id=${id}`;
 
     // Crear un enlace temporal para la descarga del archivo
     const link = document.createElement('a');
